@@ -7,4 +7,45 @@
     <color name="teal_700">#FF018786</color>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+
+    <color name="primaryColor">#f8bbd0</color>
+    <color name="primaryLightColor">#ffeeff</color>
+    <color name="primaryDarkColor">#c48b9f</color>
+    <color name="secondaryColor">#90caf9</color>
+    <color name="secondaryLightColor">#c3fdff</color>
+    <color name="secondaryDarkColor">#5d99c6</color>
+    <color name="primaryTextColor">#000000</color>
+    <color name="secondaryTextColor">#000000</color>
+
+    <color name="dark_night">#424242</color>
+    <color name="light_night">#656565</color>
+
+    <color name="A1">#6200EE</color>
+    <color name="A2">#3700B3</color>
+    <color name="A3">#03DAC6</color>
+    <color name="A4">#018786</color>
+    <color name="A5">#FFFFFF</color>
+    <color name="A6">#FFFFFF</color>
+    <color name="A7">#C51162</color>
+    <color name="A8">#FFFFFF</color>
+    <color name="A9">#000000</color>
+    <color name="A10">#000000</color>
+    <color name="A11">#000000</color>
+    <color name="A12">#FFFFFF</color>
+
+    <color name="A1_dark">#BB86FC</color>
+    <color name="A2_dark">#3700B3</color>
+    <color name="A3_dark">#03DAC6</color>
+    <color name="A4_dark">#121212</color>
+    <color name="A5_dark">#121212</color>
+    <color name="A6_dark">#CF6679</color>
+    <color name="A7_dark">#000000</color>
+    <color name="A8_dark">#000000</color>
+    <color name="A9_dark">#FFFFFF</color>
+    <color name="A10_dark">#FFFFFF</color>
+    <color name="A11_dark">#000000</color>
+
+
+
+
 </resources>

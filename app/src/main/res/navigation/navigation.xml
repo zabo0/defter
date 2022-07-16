@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/navigation"
+    app:startDestination="@id/homeFragment">
+
+    <fragment
+        android:id="@+id/homeFragment"
+        android:name="com.saboon.defter.fragments.HomeFragment"
+        android:label="fragment_home"
+        tools:layout="@layout/fragment_home" />
+    <fragment
+        android:id="@+id/addNewMomentFragment"
+        android:name="com.saboon.defter.fragments.AddNewMomentFragment"
+        android:label="fragment_add_new_moment"
+        tools:layout="@layout/fragment_add_new_moment" />
+    <fragment
+        android:id="@+id/datesFragment"
+        android:name="com.saboon.defter.fragments.DatesFragment"
+        android:label="fragment_dates"
+        tools:layout="@layout/fragment_dates" />
+</navigation>

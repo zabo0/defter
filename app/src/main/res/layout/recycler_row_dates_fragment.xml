@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/bg_recycler_row_dates"
+    android:padding="15dp"
+    android:layout_margin="5dp"
+    android:orientation="horizontal">
+
+    <TextView
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:textColor="?attr/colorOnPrimary"
+        android:layout_marginLeft="30dp"
+        android:textSize="18sp"
+        android:text="12 February 2021"/>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:textSize="18sp"
+        android:textColor="?attr/colorOnPrimary"
+        android:layout_marginRight="5dp"
+        android:text="4"/>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:textColor="?attr/colorOnPrimary"
+        android:textSize="18sp"
+        android:text="@string/moments"/>
+
+
+</LinearLayout>
