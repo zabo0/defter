@@ -4,14 +4,18 @@
     <option name="filePathToZoomLevelMap">
       <map>
         <entry key="..\:/Users/Sabahattin/Desktop/projects/Android/Defter/app/src/main/res/drawable/bg_bottom_navigation.xml" value="0.29" />
+        <entry key="..\:/Users/Sabahattin/Desktop/projects/Android/Defter/app/src/main/res/drawable/bg_button_login.xml" value="0.29" />
         <entry key="..\:/Users/Sabahattin/Desktop/projects/Android/Defter/app/src/main/res/drawable/bg_edit_text_search.xml" value="0.29" />
         <entry key="..\:/Users/Sabahattin/Desktop/projects/Android/Defter/app/src/main/res/drawable/bg_recycler_row_dates.xml" value="0.29" />
         <entry key="..\:/Users/Sabahattin/Desktop/projects/Android/Defter/app/src/main/res/drawable/bg_recycler_row_home.xml" value="0.29" />
         <entry key="..\:/Users/Sabahattin/Desktop/projects/Android/Defter/app/src/main/res/drawable/bg_recycler_row_home_chield.xml" value="0.29" />
-        <entry key="..\:/Users/Sabahattin/Desktop/projects/Android/Defter/app/src/main/res/layout/activity_main.xml" value="0.33" />
+        <entry key="..\:/Users/Sabahattin/Desktop/projects/Android/Defter/app/src/main/res/layout/activity_main.xml" value="0.22" />
+        <entry key="..\:/Users/Sabahattin/Desktop/projects/Android/Defter/app/src/main/res/layout/activity_password.xml" value="0.2418478260869565" />
         <entry key="..\:/Users/Sabahattin/Desktop/projects/Android/Defter/app/src/main/res/layout/fragment_add_new_moment.xml" value="0.33" />
         <entry key="..\:/Users/Sabahattin/Desktop/projects/Android/Defter/app/src/main/res/layout/fragment_dates.xml" value="0.33" />
         <entry key="..\:/Users/Sabahattin/Desktop/projects/Android/Defter/app/src/main/res/layout/fragment_home.xml" value="0.2418478260869565" />
+        <entry key="..\:/Users/Sabahattin/Desktop/projects/Android/Defter/app/src/main/res/layout/fragment_log_in.xml" value="0.2418478260869565" />
+        <entry key="..\:/Users/Sabahattin/Desktop/projects/Android/Defter/app/src/main/res/layout/fragment_password_app.xml" value="0.2418478260869565" />
         <entry key="..\:/Users/Sabahattin/Desktop/projects/Android/Defter/app/src/main/res/layout/profile_menu_layout.xml" value="0.33" />
         <entry key="..\:/Users/Sabahattin/Desktop/projects/Android/Defter/app/src/main/res/layout/recycler_row_dates_fragment.xml" value="0.25" />
         <entry key="..\:/Users/Sabahattin/Desktop/projects/Android/Defter/app/src/main/res/layout/recycler_row_home_fragment.xml" value="0.22" />

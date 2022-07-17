@@ -14,4 +14,7 @@
     <string name="remainder">Number of posts remaining:\u0020</string>
     <string name="search">Search</string>
     <string name="moments">Moments</string>
+    <string name="email">E Mail</string>
+    <string name="password">Password</string>
+    <string name="login">Log In</string>
 </resources>
