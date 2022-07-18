@@ -1,18 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
     <item
-        android:id="@+id/home"
+        android:id="@+id/homeFragment"
         android:enabled="true"
         android:icon="@drawable/ic_baseline_home_24"
+        android:menuCategory="secondary"
         android:title="@string/home"/>
     <item
-        android:id="@+id/add"
+        android:id="@+id/addNewMomentFragment"
         android:enabled="true"
         android:icon="@drawable/ic_baseline_add_circle_24"
-        android:title="@string/add"/>
+        android:menuCategory="secondary"
+        android:title="@string/addNew"/>
     <item
-        android:id="@+id/dates"
+        android:id="@+id/datesFragment"
         android:enabled="true"
         android:title="@string/dates"
-        android:icon="@drawable/ic_baseline_format_list_bulleted_24"/>
+        android:icon="@drawable/ic_baseline_format_list_bulleted_24"
+        android:menuCategory="secondary"/>
 </menu>

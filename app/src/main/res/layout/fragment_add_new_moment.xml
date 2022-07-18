@@ -25,14 +25,89 @@
             app:cardCornerRadius="25dp">
 
             <ImageView
-                android:id="@+id/roundedImageView"
+                android:id="@+id/imageView_addPhoto"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:background="@color/white"
+                android:layout_height="200dp"
+                android:background="?attr/colorPrimary"
                 android:scaleType="centerCrop"
-                tools:srcCompat="@tools:sample/avatars"
-                />
+                android:src="@drawable/avatars"/>
         </androidx.cardview.widget.CardView>
+
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_marginTop="10dp"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <androidx.cardview.widget.CardView
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="75dp"
+                android:layout_margin="5dp"
+                app:cardCornerRadius="25dp">
+
+                <ImageView
+                    android:id="@+id/imageView_photoFirst"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:background="@drawable/bg_empty_imageview"
+                    android:scaleType="centerCrop"/>
+
+                <ProgressBar
+                    android:id="@+id/progressBar_first"
+                    android:visibility="gone"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"/>
+            </androidx.cardview.widget.CardView>
+
+            <androidx.cardview.widget.CardView
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_margin="5dp"
+                android:layout_height="75dp"
+                app:cardCornerRadius="25dp">
+
+                <ImageView
+                    android:id="@+id/imageView_photoSecond"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:background="@drawable/bg_empty_imageview"
+                    android:scaleType="centerCrop"/>
+
+                <ProgressBar
+                    android:id="@+id/progressBar_second"
+                    android:layout_width="wrap_content"
+                    android:visibility="gone"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"/>
+
+            </androidx.cardview.widget.CardView>
+
+            <androidx.cardview.widget.CardView
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_margin="5dp"
+                android:layout_height="75dp"
+                app:cardCornerRadius="25dp">
+
+                <ImageView
+                    android:id="@+id/imageView_photoThird"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:background="@drawable/bg_empty_imageview"
+                    android:scaleType="centerCrop"/>
+
+                <ProgressBar
+                    android:id="@+id/progressBar_third"
+                    android:layout_width="wrap_content"
+                    android:visibility="gone"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"/>
+            </androidx.cardview.widget.CardView>
+
+        </LinearLayout>
 
         <com.google.android.material.textfield.TextInputLayout
             style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
@@ -42,7 +117,7 @@
             android:hint="@string/date">
 
             <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/addEditSubjectTime_editText_startTimePicker"
+                android:id="@+id/date"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:focusableInTouchMode="false"
@@ -59,12 +134,13 @@
             app:endIconMode="clear_text">
 
             <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/comment"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:gravity="start"
                 android:inputType="textMultiLine"
-                android:lines="5"
-                android:maxLines="10" />
+                android:minLines="5"
+                android:maxLines="15" />
 
         </com.google.android.material.textfield.TextInputLayout>
 
@@ -75,11 +151,68 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:gravity="end"
-        android:layout_margin="20dp"
         android:orientation="vertical"
+        android:layout_marginLeft="20dp"
+        android:layout_marginRight="20dp"
+        android:layout_marginTop="5dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/linearLayout">
+
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="end"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/updateSuccessText"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="match_parent"
+                android:visibility="gone"
+                android:text="@string/momentAdded"
+                android:gravity="center_vertical"
+                app:drawableStartCompat="@drawable/ic_baseline_check_24" />
+
+
+           <LinearLayout
+               android:id="@+id/loadingLayout"
+               android:layout_width="0dp"
+               android:layout_weight="1"
+               android:visibility="gone"
+               android:layout_height="match_parent"
+               android:orientation="horizontal">
+               <TextView
+                   android:layout_width="wrap_content"
+                   android:visibility="visible"
+                   android:layout_height="match_parent"
+                   android:text="@string/loading"
+                   android:gravity="center_vertical"
+                   android:layout_marginRight="3dp"/>
+
+               <ProgressBar
+                   android:layout_width="15dp"
+                   android:layout_marginRight="10dp"
+                   android:layout_height="match_parent"/>
+
+               <ProgressBar
+                   android:id="@+id/progressBar"
+                   android:layout_width="0dp"
+                   android:layout_weight="1"
+                   android:visibility="visible"
+                   android:layout_marginRight="10dp"
+                   android:layout_height="match_parent"
+                   style="@style/Widget.AppCompat.ProgressBar.Horizontal"/>
+           </LinearLayout>
+
+            <Button
+                android:id="@+id/button_add"
+                android:layout_width="100dp"
+                android:layout_height="wrap_content"
+                android:text="@string/add" />
+        </LinearLayout>
 
         <TextView
             android:layout_width="wrap_content"
@@ -108,33 +241,33 @@
 
     </LinearLayout>
 
-    <LinearLayout
-        android:id="@+id/linearLayout2"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:padding="20dp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent">
+<!--    <LinearLayout-->
+<!--        android:id="@+id/linearLayout2"-->
+<!--        android:layout_width="match_parent"-->
+<!--        android:layout_height="wrap_content"-->
+<!--        android:orientation="horizontal"-->
+<!--        android:padding="20dp"-->
+<!--        app:layout_constraintBottom_toBottomOf="parent"-->
+<!--        app:layout_constraintEnd_toEndOf="parent"-->
+<!--        app:layout_constraintStart_toStartOf="parent">-->
 
-        <Button
-            android:id="@+id/button_cancel"
-            style="?attr/materialButtonOutlinedStyle"
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_margin="5dp"
-            android:layout_weight="1"
-            android:text="@string/cancel" />
+<!--        <Button-->
+<!--            android:id="@+id/button_cancel"-->
+<!--            style="?attr/materialButtonOutlinedStyle"-->
+<!--            android:layout_width="0dp"-->
+<!--            android:layout_height="match_parent"-->
+<!--            android:layout_margin="5dp"-->
+<!--            android:layout_weight="1"-->
+<!--            android:text="@string/cancel" />-->
 
-        <Button
-            android:id="@+id/button_save"
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_margin="5dp"
-            android:layout_weight="1"
-            android:text="@string/post" />
-    </LinearLayout>
+<!--        <Button-->
+<!--            android:id="@+id/button_save"-->
+<!--            android:layout_width="0dp"-->
+<!--            android:layout_height="match_parent"-->
+<!--            android:layout_margin="5dp"-->
+<!--            android:layout_weight="1"-->
+<!--            android:text="@string/post" />-->
+<!--    </LinearLayout>-->
 
 
 
