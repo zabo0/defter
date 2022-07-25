@@ -22,4 +22,6 @@
     <string name="givePermission">Give Permission</string>
     <string name="momentAdded">Moment Added</string>
     <string name="loading">Loading</string>
+    <string name="pleaseSelectPhoto">Please Select A Photo</string>
+    <string name="cantAddMoment">You can not add more then 3 moment.</string>
 </resources>
