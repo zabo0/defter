@@ -20,6 +20,8 @@ import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.get
 import com.blankj.utilcode.util.FileUtils
 import com.blankj.utilcode.util.ImageUtils
 import com.blankj.utilcode.util.UriUtils
@@ -36,6 +38,7 @@ import com.saboon.defter.R
 import com.saboon.defter.databinding.FragmentAddNewMomentBinding
 import com.saboon.defter.models.ModelMoments
 import com.saboon.defter.utils.*
+import com.saboon.defter.viewmodels.AddNewMomentFragmentViewModel
 import java.io.IOException
 import java.util.*
 import kotlin.concurrent.schedule
@@ -45,28 +48,30 @@ class AddNewMomentFragment : Fragment() {
     private var _binding: FragmentAddNewMomentBinding? =null
     private val binding get() = _binding!!
 
-    private lateinit var auth: FirebaseAuth
-    private lateinit var storage: FirebaseStorage
-    private lateinit var firestore: FirebaseFirestore
+//    private lateinit var auth: FirebaseAuth
+//    private lateinit var storage: FirebaseStorage
+//    private lateinit var firestore: FirebaseFirestore
 
     private lateinit var moment: ModelMoments
 
     private lateinit var requestPermissionLauncher: ActivityResultLauncher<String>
     private lateinit var activityResultLauncher: ActivityResultLauncher<Intent>
 
+    private lateinit var viewModel: AddNewMomentFragmentViewModel
+
     private var dayMoment: Long = 0
     private var selectedPicture: Uri? = null
-    private var selectedPictureBitmap: Bitmap? = null
     private var dailyRemainingMoments = "0"
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        auth = FirebaseAuth.getInstance()
-        storage = Firebase.storage
-        firestore = Firebase.firestore
+//        auth = FirebaseAuth.getInstance()
+//        storage = Firebase.storage
+//        firestore = Firebase.firestore
+
+        viewModel = ViewModelProvider(this).get(AddNewMomentFragmentViewModel::class.java)
 
         registerLauncher()
-        setImagesToDaily()
     }
 
     override fun onCreateView(
@@ -82,21 +87,15 @@ class AddNewMomentFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+
+
+        viewModel.getDailyMoments()
+
         dayMoment = DateTimeConverter().getCurrentTime()
         binding.date.setText(DateTimeConverter().getTime(dayMoment, "dd MMMM yyyy"))
 
 
-        firestore.collection(COLLECTION_USERS).document(auth.currentUser!!.uid).get()
-            .addOnSuccessListener {
-                if (it != null){
-                   dailyRemainingMoments = it.data?.get("dailyRemaining").toString()
-                    binding.editTextRemaining.text = dailyRemainingMoments
-                    if (dailyRemainingMoments == "0"){
-                        binding.buttonAdd.isEnabled = false
-                    }
-                }
-            }
-
+        viewModel.getDailyRemainingMoments()
 
         binding.date.setOnClickListener {
             getDay {
@@ -125,46 +124,26 @@ class AddNewMomentFragment : Fragment() {
                 when(binding.buttonAdd.text){
                     resources.getString(R.string.add) -> {
                         if(selectedPicture != null){
-                            val photoID = IDGenerator().generateMomentPhotoID(dayMoment)
-                            val photoRef = storage.reference.child(PATH_TO_MOMENTS_PHOTOS).child(photoID + ".jpg")
-                            val resizedPhotoRef = storage.reference.child(
-                                PATH_TO_MOMENTS__RESIZED_PHOTOS).child(photoID+"_200x200.jpg")
-                            photoRef.putFile(selectedPicture!!).addOnProgressListener {taskSnapshot->
-                                binding.loadingLayout.visibility = View.VISIBLE
-                                binding.buttonAdd.isEnabled = false
-                                val progress: Double = 100.0 * taskSnapshot.bytesTransferred / taskSnapshot.totalByteCount
-                                binding.progressBar.progress = progress.toInt()
-                            }.addOnSuccessListener {
 
-                                photoRef.downloadUrl.addOnSuccessListener {downloadURL->
-                                    Timer().schedule(5000) {
-                                        resizedPhotoRef.downloadUrl.addOnSuccessListener {resizedDownloadURL->
-                                            moment = createMoment(downloadURL.toString(),resizedDownloadURL.toString())
-                                            firestore.collection(COLLECTION_MOMENTS).document(IDGenerator().generateMomentID(moment.date,moment.sender))
-                                                .set(moment)
-                                                .addOnSuccessListener {
+                            viewModel.addPhotoToStorage(selectedPicture!!,dayMoment){downloadURL, resizedDownloadURL ->
+                                moment = createMoment(downloadURL,resizedDownloadURL)
 
-                                                    binding.updateSuccessText.visibility = View.VISIBLE
-                                                    binding.buttonAdd.isEnabled = true
-                                                    binding.buttonAdd.text = resources.getString(R.string.addNew)
-                                                    binding.imageViewAddPhoto.setImageResource(R.drawable.avatars)
-                                                    binding.comment.setText("")
-                                                    binding.comment.clearFocus()
-                                                    Toast.makeText(requireContext(),resources.getString(R.string.momentAdded),Toast.LENGTH_LONG).show()
+                                viewModel.addMoment(moment){
+                                    if(it){
+                                        binding.updateSuccessText.visibility = View.VISIBLE
+                                        binding.buttonAdd.isEnabled = true
+                                        binding.buttonAdd.text = resources.getString(R.string.addNew)
+                                        binding.imageViewAddPhoto.setImageResource(R.drawable.avatars)
+                                        binding.comment.setText("")
+                                        binding.comment.clearFocus()
+                                        Toast.makeText(requireContext(),resources.getString(R.string.momentAdded),Toast.LENGTH_LONG).show()
 
-                                                    updateUserRemaining(resizedDownloadURL.toString())
+                                        viewModel.updateUserRemaining(resizedDownloadURL,dailyRemainingMoments)
 
-                                                    binding.loadingLayout.visibility = View.GONE
-                                                }.addOnFailureListener {e->
-                                                    binding.loadingLayout.visibility = View.GONE
-                                                    Toast.makeText(requireContext(),e.localizedMessage,Toast.LENGTH_LONG).show()
-                                                }
-                                        }
                                     }
                                 }
-                            }.addOnFailureListener {e->
-                                Toast.makeText(requireContext(),e.localizedMessage,Toast.LENGTH_LONG).show()
                             }
+
                         }else{
                             Toast.makeText(requireContext(),resources.getString(R.string.pleaseSelectPhoto),Toast.LENGTH_LONG).show()
                         }
@@ -178,53 +157,54 @@ class AddNewMomentFragment : Fragment() {
                 }
             }
         }
+        observer()
     }
 
-    private fun updateUserRemaining(resizedDownloadURL: String) {
-        when(dailyRemainingMoments){
-            "3" -> {
-                firestore.collection(COLLECTION_USERS).document(auth.currentUser!!.uid).update(
-                    mapOf(
-                        "dailyMomentIDFirst" to resizedDownloadURL,
-                        "dailyRemaining" to "2"
-                    ))
+
+
+    private fun observer(){
+        viewModel.dailyMoment_1.observe(viewLifecycleOwner, androidx.lifecycle.Observer {
+            if ( it!= null){
                 Glide.with(this)
-                    .load(moment.resizedPhotoURL)
+                    .load(it)
                     .into(binding.imageViewPhotoFirst)
-                dailyRemainingMoments = "2"
-                binding.editTextRemaining.text = dailyRemainingMoments
-
             }
-            "2" -> {
-                firestore.collection(COLLECTION_USERS).document(auth.currentUser!!.uid).update(
-                    mapOf(
-                        "dailyMomentIDSecond" to resizedDownloadURL,
-                        "dailyRemaining" to "1"
-                    ))
+        })
+        viewModel.dailyMoment_2.observe(viewLifecycleOwner, androidx.lifecycle.Observer {
+            if ( it!= null){
                 Glide.with(this)
-                    .load(moment.resizedPhotoURL)
+                    .load(it)
                     .into(binding.imageViewPhotoSecond)
-
-                dailyRemainingMoments = "1"
-                binding.editTextRemaining.text = dailyRemainingMoments
             }
-            "1" -> {
-                firestore.collection(COLLECTION_USERS).document(auth.currentUser!!.uid).update(
-                    mapOf(
-                        "dailyMomentIDThird" to resizedDownloadURL,
-                        "dailyRemaining" to "0"
-                    ))
+        })
+        viewModel.dailyMoment_3.observe(viewLifecycleOwner, androidx.lifecycle.Observer {
+            if ( it!= null){
                 Glide.with(this)
-                    .load(moment.resizedPhotoURL)
+                    .load(it)
                     .into(binding.imageViewPhotoThird)
-
-                dailyRemainingMoments = "0"
-                binding.editTextRemaining.text = dailyRemainingMoments
-                binding.buttonAdd.isEnabled = false
             }
-        }
+        })
+        viewModel.dailyRemainingMoment.observe(viewLifecycleOwner, androidx.lifecycle.Observer {
+            if(it!= null){
+                dailyRemainingMoments = it
+                binding.editTextRemaining.text = it
+            }
+        })
+        viewModel.loading.observe(viewLifecycleOwner, androidx.lifecycle.Observer {
+            if (it){
+                binding.loadingLayout.visibility = View.VISIBLE
+                binding.buttonAdd.isEnabled = false
+            }else{
+                binding.loadingLayout.visibility = View.GONE
+                binding.buttonAdd.isEnabled = true
+            }
+        })
+        viewModel.progress.observe(viewLifecycleOwner, androidx.lifecycle.Observer {
+            if(it!=null){
+                binding.progressBar.progress = it
+            }
+        })
     }
-
 
     private fun getDay(callback: (Long?) -> Unit){
         val datePicker = MaterialDatePicker.Builder.datePicker()
@@ -241,11 +221,11 @@ class AddNewMomentFragment : Fragment() {
     }
 
     private fun createMoment(downloadURL: String, resizedDownloadURL: String):ModelMoments{
-        val sender = auth.currentUser!!.email!!
+        val sender = viewModel.getUser().email
         val date = dayMoment
         val dateAdded = DateTimeConverter().getCurrentTime()
         val text = binding.comment.text.toString()
-        val id = IDGenerator().generateMomentID(dayMoment,sender)
+        val id = IDGenerator().generateMomentID(dayMoment,sender!!)
 
         return ModelMoments(id,sender,date,dateAdded,downloadURL,resizedDownloadURL,text)
     }
@@ -256,18 +236,6 @@ class AddNewMomentFragment : Fragment() {
                 val intentFromResult = result.data
                 if (intentFromResult!=null){
                     selectedPicture = intentFromResult.data
-                    try {
-                        if (Build.VERSION.SDK_INT >= 28) {
-                            val source = ImageDecoder.createSource(requireActivity().contentResolver, selectedPicture!!)
-                            selectedPictureBitmap = ImageDecoder.decodeBitmap(source)
-                            binding.imageViewAddPhoto.setImageBitmap(selectedPictureBitmap)
-                        } else {
-                            selectedPictureBitmap = MediaStore.Images.Media.getBitmap(requireActivity().contentResolver, selectedPicture)
-                            binding.imageViewAddPhoto.setImageBitmap(selectedPictureBitmap)
-                        }
-                    } catch (e: IOException) {
-                        e.printStackTrace()
-                    }
                     selectedPicture.let {
                         binding.imageViewAddPhoto.setImageURI(it)
                     }
@@ -278,16 +246,9 @@ class AddNewMomentFragment : Fragment() {
         requestPermissionLauncher = registerForActivityResult(ActivityResultContracts.RequestPermission())
         { isGranted: Boolean ->
                 if (isGranted) {
-                    // Permission is granted. Continue the action or workflow in your
-                    // app.
                     val intentToGallery = Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
                     activityResultLauncher.launch(intentToGallery)
                 } else {
-                    // Explain to the user that the feature is unavailable because the
-                    // features requires a permission that the user has denied. At the
-                    // same time, respect the user's decision. Don't link to system
-                    // settings in an effort to convince the user to change their
-                    // decision.
                     Toast.makeText(requireContext(),resources.getString(R.string.permission),Toast.LENGTH_LONG).show()
                 }
             }
@@ -299,63 +260,21 @@ class AddNewMomentFragment : Fragment() {
                 requireContext(),
                 Manifest.permission.READ_EXTERNAL_STORAGE
             ) == PackageManager.PERMISSION_GRANTED -> {
-                // You can use the API that requires the permission.
                 val intentToGallery = Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
                 activityResultLauncher.launch(intentToGallery)
             }
             shouldShowRequestPermissionRationale(Manifest.permission.READ_EXTERNAL_STORAGE) -> {
-                // In an educational UI, explain to the user why your app requires this
-                // permission for a specific feature to behave as expected. In this UI,
-                // include a "cancel" or "no thanks" button that allows the user to
-                // continue using your app without granting the permission.
                 Snackbar.make(view,resources.getString(R.string.permission),
                     Snackbar.LENGTH_INDEFINITE).setAction(resources.getString(R.string.givePermission)){
                     requestPermissionLauncher.launch(Manifest.permission.READ_EXTERNAL_STORAGE)
                 }.show()
             }
             else -> {
-                // You can directly ask for the permission.
-                // The registered ActivityResultCallback gets the result of this request.
                 requestPermissionLauncher.launch(Manifest.permission.READ_EXTERNAL_STORAGE)
             }
         }
     }
 
-    private fun setImagesToDaily(){
-        firestore.collection(COLLECTION_USERS).document(auth.currentUser!!.uid).get()
-            .addOnSuccessListener {
-                if(it != null){
-                    if(it.data?.get("dailyMomentIDFirst") != "null"){
-                        Glide.with(this)
-                            .load(it.data?.get("dailyMomentIDFirst"))
-                            .into(binding.imageViewPhotoFirst)
-                    }
-                    if(it.data?.get("dailyMomentIDSecond") != "null"){
-                        Glide.with(this).load(it.data?.get("dailyMomentIDSecond")).into(binding.imageViewPhotoSecond)
-                    }
-                    if(it.data?.get("dailyMomentIDThird") != "null"){
-                        Glide.with(this).load(it.data?.get("dailyMomentIDThird")).into(binding.imageViewPhotoThird)
-                    }
-                }
-            }
-    }
-
-    private fun makeSmallerBitmap(image: Bitmap, maximumSize : Int) : Bitmap {
-        var width = image.width
-        var height = image.height
-
-        val bitmapRatio : Double = width.toDouble() / height.toDouble()
-        if (bitmapRatio > 1) {
-            width = maximumSize
-            val scaledHeight = width / bitmapRatio
-            height = scaledHeight.toInt()
-        } else {
-            height = maximumSize
-            val scaledWidth = height * bitmapRatio
-            width = scaledWidth.toInt()
-        }
-        return Bitmap.createScaledBitmap(image,width,height,true)
-    }
     override fun onDestroy() {
         super.onDestroy()
         _binding = null
