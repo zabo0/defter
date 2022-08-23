@@ -1,23 +1,18 @@
 package com.saboon.defter.activities
 
-import android.content.Intent
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.view.Menu
 import android.view.MenuItem
-import androidx.core.view.MenuItemCompat
+import android.view.View
+import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.get
 import androidx.navigation.NavController
-import androidx.navigation.Navigation
-import androidx.navigation.findNavController
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.setupWithNavController
-import com.bumptech.glide.Glide
 import com.google.firebase.auth.FirebaseAuth
 import com.saboon.defter.R
 import com.saboon.defter.databinding.ActivityMainBinding
-import com.saboon.defter.fragments.LogInFragment
-import de.hdodenhof.circleimageview.CircleImageView
+import net.yslibrary.android.keyboardvisibilityevent.KeyboardVisibilityEvent
+import net.yslibrary.android.keyboardvisibilityevent.KeyboardVisibilityEventListener
 
 class MainActivity : AppCompatActivity() {
 
@@ -43,8 +38,16 @@ class MainActivity : AppCompatActivity() {
         auth = FirebaseAuth.getInstance()
 
         val navHostFragment  = supportFragmentManager.findFragmentById(binding.fragmentContainerViewMain.id)  as NavHostFragment
-        binding.bottomNavigation.setupWithNavController(navHostFragment .navController)
+        binding.bottomNavigation.setupWithNavController(navHostFragment.navController)
         navController = navHostFragment.navController
+
+        KeyboardVisibilityEvent.setEventListener(this){
+            if(it){
+                binding.bottomNavigation.visibility = View.GONE
+            }else{
+                binding.bottomNavigation.visibility = View.VISIBLE
+            }
+        }
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {

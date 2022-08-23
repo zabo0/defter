@@ -14,10 +14,23 @@
         android:id="@+id/addNewMomentFragment"
         android:name="com.saboon.defter.fragments.AddNewMomentFragment"
         android:label="fragment_add_new_moment"
-        tools:layout="@layout/fragment_add_new_moment" />
+        tools:layout="@layout/fragment_add_new_moment" >
+        <action
+            android:id="@+id/action_addNewMomentFragment_to_imageViewerFragment"
+            app:destination="@id/imageViewerFragment" />
+    </fragment>
     <fragment
         android:id="@+id/datesFragment"
         android:name="com.saboon.defter.fragments.DatesFragment"
         android:label="fragment_dates"
         tools:layout="@layout/fragment_dates" />
+    <fragment
+        android:id="@+id/imageViewerFragment"
+        android:name="com.saboon.defter.fragments.ImageViewerFragment"
+        android:label="fragment_image_viewer"
+        tools:layout="@layout/fragment_image_viewer" >
+        <action
+            android:id="@+id/action_imageViewerFragment_to_addNewMomentFragment"
+            app:destination="@id/addNewMomentFragment" />
+    </fragment>
 </navigation>

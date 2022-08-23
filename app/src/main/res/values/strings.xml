@@ -9,7 +9,7 @@
     <string name="date">Date</string>
     <string name="cancel">Cancel</string>
     <string name="post">Post</string>
-    <string name="warningText">You can add only 3 moments per day</string>
+    <string name="warningText">You can add only 10 moments per day</string>
     <string name="remainder">Number of moments remaining:\u0020</string>
     <string name="search">Search</string>
     <string name="moments">Moments</string>
@@ -24,4 +24,10 @@
     <string name="loading">Loading</string>
     <string name="pleaseSelectPhoto">Please Select A Photo</string>
     <string name="cantAddMoment">You can not add more then 3 moment.</string>
+    <string name="errorText">There is a problem!</string>
+    <string name="dummy_button">Dummy Button</string>
+    <string name="dummy_content">DUMMY\nCONTENT</string>
+    <string name="page_home">Home</string>
+    <string name="account">Account</string>
+    <string name="page_addNewMoment">Add New Moment</string>
 </resources>

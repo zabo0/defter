@@ -4,7 +4,6 @@ import android.app.Application
 import android.net.Uri
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.MutableLiveData
-import com.bumptech.glide.Glide
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.firestore.FirebaseFirestore
@@ -15,6 +14,7 @@ import com.google.firebase.storage.ktx.storage
 import com.saboon.defter.models.ModelMoments
 import com.saboon.defter.utils.*
 import java.util.*
+import kotlin.collections.ArrayList
 import kotlin.concurrent.schedule
 
 class AddNewMomentFragmentViewModel(application: Application): AndroidViewModel(application) {
@@ -23,10 +23,8 @@ class AddNewMomentFragmentViewModel(application: Application): AndroidViewModel(
     private var storage: FirebaseStorage = Firebase.storage
     private var firestore: FirebaseFirestore = Firebase.firestore
 
-    var dailyMoment_1 = MutableLiveData<String>()
-    var dailyMoment_2 = MutableLiveData<String>()
-    var dailyMoment_3 = MutableLiveData<String>()
-    var dailyRemainingMoment = MutableLiveData<String>()
+    var dailyMoments = MutableLiveData<List<String>?>()
+    //var dailyRemainingMoment = MutableLiveData<String>()
     var progress = MutableLiveData<Int>()
     var loading = MutableLiveData<Boolean>()
     var error = MutableLiveData<String>()
@@ -37,26 +35,31 @@ class AddNewMomentFragmentViewModel(application: Application): AndroidViewModel(
 
 
     fun getDailyMoments(){
-        firestore.collection(COLLECTION_USERS).document(auth.currentUser!!.uid).get()
+        firestore.collection(COLLECTION_DAILY_MOMENTS).document(auth.currentUser!!.uid).get()
             .addOnSuccessListener {
-                if(it != null){
-                    if(it.data?.get("dailyMomentIDFirst") != "null"){
-                        dailyMoment_1.value = it.data?.get("dailyMomentIDFirst").toString()
+                if(it.exists()){
+                    val momentList = arrayListOf<String>()
+                    val momentMap = it.data
+
+                    if(momentMap != null){
+                        for(entry in momentMap.entries){
+                            if (entry.key.toString() != "dailyMoments" && entry.value.toString() != "null"){
+                                momentList.add(entry.value.toString())
+                            }
+                        }
                     }
-                    if(it.data?.get("dailyMomentIDSecond") != "null"){
-                        dailyMoment_2.value = it.data?.get("dailyMomentIDSecond").toString()
-                    }
-                    if(it.data?.get("dailyMomentIDThird") != "null"){
-                        dailyMoment_3.value = it.data?.get("dailyMomentIDThird").toString()
-                    }
+                    dailyMoments.value = momentList
                 }
+            }.addOnFailureListener {
+                error.value = it.localizedMessage
             }
     }
-    fun getDailyRemainingMoments(){
-        firestore.collection(COLLECTION_USERS).document(auth.currentUser!!.uid).get()
+    fun getDailyRemainingMoments(result: (String) -> Unit){
+        firestore.collection(COLLECTION_DAILY_MOMENTS).document(auth.currentUser!!.uid).get()
             .addOnSuccessListener {
                 if (it != null){
-                    dailyRemainingMoment.value = it.data?.get("dailyRemaining").toString()
+                    //dailyRemainingMoment.value = it.data?.get("dailyMoments").toString()
+                    result(it.data?.get("dailyMoments").toString())
                 }
             }
     }
@@ -100,32 +103,51 @@ class AddNewMomentFragmentViewModel(application: Application): AndroidViewModel(
         var dailyRemainingIDString = "0"
         var dailyRemainingNumber = "0"
 
-        when(dailyRemainingMoments){
-            "3" -> {
-                dailyRemainingIDString = "dailyMomentIDFirst"
-                dailyRemainingNumber = "2"
-                dailyMoment_1.value = resizedDownloadURL
-            }
-            "2" -> {
-                dailyRemainingIDString = "dailyMomentIDSecond"
-                dailyRemainingNumber = "1"
-                dailyMoment_2.value = resizedDownloadURL
-            }
-            "1" -> {
-
-                dailyRemainingIDString = "dailyMomentIDThird"
-                dailyRemainingNumber = "0"
-                dailyMoment_3.value = resizedDownloadURL
-            }
-        }
-
         firestore.collection(COLLECTION_USERS).document(auth.currentUser!!.uid).update(
             mapOf(
                 dailyRemainingIDString to resizedDownloadURL,
                 "dailyRemaining" to dailyRemainingNumber
-            ))
+            )
+        )
 
-        dailyRemainingMoment.value = dailyRemainingNumber
+        //dailyRemainingMoment.value = dailyRemainingNumber
+    }
+
+    private fun getUserMomentsNumber(moments: (Long) -> Unit){
+        firestore.collection(COLLECTION_USERS).document(auth.currentUser!!.uid).get()
+            .addOnSuccessListener {
+                if(it != null){
+                    moments(it.getLong("moments")!!)
+                }
+            }
+            .addOnFailureListener { e->
+                error.value = e.localizedMessage
+            }
+    }
+
+    fun updateUserMomentsNumber(){
+        getUserMomentsNumber {
+            val moments = it + 1
+            firestore.collection(COLLECTION_USERS).document(auth.currentUser!!.uid).update(
+                mapOf(
+                    "moments" to moments
+                )
+            )
+        }
+    }
+
+    fun getUserName(): String{
+        var userName = "null"
+        firestore.collection(COLLECTION_USERS).document(auth.currentUser!!.uid)
+            .get()
+            .addOnSuccessListener {
+                if (it!= null){
+                    userName = it.data!!["userName"] as String
+                }
+            }.addOnFailureListener {
+                userName = "null"
+            }
+        return userName
     }
 
 

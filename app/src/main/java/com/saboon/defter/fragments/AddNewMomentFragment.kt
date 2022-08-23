@@ -1,16 +1,11 @@
 package com.saboon.defter.fragments
 
 import android.Manifest
-import android.R.attr.bitmap
 import android.app.Activity.RESULT_OK
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.graphics.Bitmap
-import android.graphics.ImageDecoder
 import android.net.Uri
-import android.os.Build
 import android.os.Bundle
-import android.os.Handler
 import android.provider.MediaStore
 import android.view.LayoutInflater
 import android.view.View
@@ -20,37 +15,24 @@ import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.get
-import com.blankj.utilcode.util.FileUtils
-import com.blankj.utilcode.util.ImageUtils
-import com.blankj.utilcode.util.UriUtils
+import androidx.navigation.findNavController
+import androidx.recyclerview.widget.LinearLayoutManager
 import com.bumptech.glide.Glide
 import com.google.android.material.datepicker.MaterialDatePicker
 import com.google.android.material.snackbar.Snackbar
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.firestore.ktx.firestore
-import com.google.firebase.ktx.Firebase
-import com.google.firebase.storage.FirebaseStorage
-import com.google.firebase.storage.ktx.storage
 import com.saboon.defter.R
+import com.saboon.defter.adapters.AddMomentFragmentRecyclerAdapter
 import com.saboon.defter.databinding.FragmentAddNewMomentBinding
 import com.saboon.defter.models.ModelMoments
 import com.saboon.defter.utils.*
 import com.saboon.defter.viewmodels.AddNewMomentFragmentViewModel
-import java.io.IOException
-import java.util.*
-import kotlin.concurrent.schedule
 
 
 class AddNewMomentFragment : Fragment() {
     private var _binding: FragmentAddNewMomentBinding? =null
     private val binding get() = _binding!!
-
-//    private lateinit var auth: FirebaseAuth
-//    private lateinit var storage: FirebaseStorage
-//    private lateinit var firestore: FirebaseFirestore
 
     private lateinit var moment: ModelMoments
 
@@ -65,9 +47,6 @@ class AddNewMomentFragment : Fragment() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-//        auth = FirebaseAuth.getInstance()
-//        storage = Firebase.storage
-//        firestore = Firebase.firestore
 
         viewModel = ViewModelProvider(this).get(AddNewMomentFragmentViewModel::class.java)
 
@@ -88,6 +67,7 @@ class AddNewMomentFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
 
+        viewModel.getDailyRemainingMoments()
 
         viewModel.getDailyMoments()
 
@@ -95,7 +75,8 @@ class AddNewMomentFragment : Fragment() {
         binding.date.setText(DateTimeConverter().getTime(dayMoment, "dd MMMM yyyy"))
 
 
-        viewModel.getDailyRemainingMoments()
+        binding.recyclerViewDailyMoments.layoutManager = LinearLayoutManager(context,LinearLayoutManager.HORIZONTAL,false)
+
 
         binding.date.setOnClickListener {
             getDay {
@@ -118,44 +99,48 @@ class AddNewMomentFragment : Fragment() {
 
         binding.buttonAdd.setOnClickListener {view->
 
-            if (dailyRemainingMoments == "0"){
-                Toast.makeText(requireContext(),resources.getString(R.string.cantAddMoment),Toast.LENGTH_LONG).show()
-            }else{
-                when(binding.buttonAdd.text){
-                    resources.getString(R.string.add) -> {
-                        if(selectedPicture != null){
+            val action = AddNewMomentFragmentDirections.actionAddNewMomentFragmentToImageViewerFragment()
+            view.findNavController().navigate(action)
 
-                            viewModel.addPhotoToStorage(selectedPicture!!,dayMoment){downloadURL, resizedDownloadURL ->
-                                moment = createMoment(downloadURL,resizedDownloadURL)
-
-                                viewModel.addMoment(moment){
-                                    if(it){
-                                        binding.updateSuccessText.visibility = View.VISIBLE
-                                        binding.buttonAdd.isEnabled = true
-                                        binding.buttonAdd.text = resources.getString(R.string.addNew)
-                                        binding.imageViewAddPhoto.setImageResource(R.drawable.avatars)
-                                        binding.comment.setText("")
-                                        binding.comment.clearFocus()
-                                        Toast.makeText(requireContext(),resources.getString(R.string.momentAdded),Toast.LENGTH_LONG).show()
-
-                                        viewModel.updateUserRemaining(resizedDownloadURL,dailyRemainingMoments)
-
-                                    }
-                                }
-                            }
-
-                        }else{
-                            Toast.makeText(requireContext(),resources.getString(R.string.pleaseSelectPhoto),Toast.LENGTH_LONG).show()
-                        }
-                    }
-
-                    resources.getString(R.string.addNew) -> {
-                        goToGallery(view)
-                        binding.buttonAdd.text = resources.getString(R.string.add)
-                        binding.updateSuccessText.visibility = View.GONE
-                    }
-                }
-            }
+//            if (dailyRemainingMoments == "0"){
+//                Toast.makeText(requireContext(),resources.getString(R.string.cantAddMoment),Toast.LENGTH_LONG).show()
+//            }else{
+//                when(binding.buttonAdd.text){
+//                    resources.getString(R.string.add) -> {
+//                        if(selectedPicture != null){
+//
+//                            viewModel.addPhotoToStorage(selectedPicture!!,dayMoment){downloadURL, resizedDownloadURL ->
+//                                moment = createMoment(downloadURL,resizedDownloadURL)
+//
+//                                viewModel.addMoment(moment){
+//                                    if(it){
+//                                        binding.updateSuccessText.visibility = View.VISIBLE
+//                                        binding.buttonAdd.isEnabled = true
+//                                        binding.buttonAdd.text = resources.getString(R.string.addNew)
+//                                        binding.imageViewAddPhoto.setImageResource(R.drawable.avatars)
+//                                        binding.comment.setText("")
+//                                        binding.comment.clearFocus()
+//                                        Toast.makeText(requireContext(),resources.getString(R.string.momentAdded),Toast.LENGTH_LONG).show()
+//
+//                                        viewModel.updateUserRemaining(resizedDownloadURL,dailyRemainingMoments)
+//                                        viewModel.updateUserMomentsNumber()
+//
+//                                    }
+//                                }
+//                            }
+//
+//                        }else{
+//                            Toast.makeText(requireContext(),resources.getString(R.string.pleaseSelectPhoto),Toast.LENGTH_LONG).show()
+//                        }
+//                    }
+//
+//                    resources.getString(R.string.addNew) -> {
+//                        goToGallery(view)
+//                        binding.buttonAdd.text = resources.getString(R.string.add)
+//                        binding.updateSuccessText.visibility = View.GONE
+//                    }
+//                }
+//            }
         }
         observer()
     }
@@ -163,31 +148,18 @@ class AddNewMomentFragment : Fragment() {
 
 
     private fun observer(){
-        viewModel.dailyMoment_1.observe(viewLifecycleOwner, androidx.lifecycle.Observer {
-            if ( it!= null){
-                Glide.with(this)
-                    .load(it)
-                    .into(binding.imageViewPhotoFirst)
-            }
-        })
-        viewModel.dailyMoment_2.observe(viewLifecycleOwner, androidx.lifecycle.Observer {
-            if ( it!= null){
-                Glide.with(this)
-                    .load(it)
-                    .into(binding.imageViewPhotoSecond)
-            }
-        })
-        viewModel.dailyMoment_3.observe(viewLifecycleOwner, androidx.lifecycle.Observer {
-            if ( it!= null){
-                Glide.with(this)
-                    .load(it)
-                    .into(binding.imageViewPhotoThird)
+        viewModel.dailyMoments.observe(viewLifecycleOwner, Observer {
+            if(it != null){
+                binding.recyclerViewDailyMoments.visibility = View.VISIBLE
+                binding.recyclerViewDailyMoments.adapter = AddMomentFragmentRecyclerAdapter(it)
+            }else{
+                binding.recyclerViewDailyMoments.visibility = View.GONE
             }
         })
         viewModel.dailyRemainingMoment.observe(viewLifecycleOwner, androidx.lifecycle.Observer {
             if(it!= null){
                 dailyRemainingMoments = it
-                binding.editTextRemaining.text = it
+//                binding.editTextRemaining.text = it
             }
         })
         viewModel.loading.observe(viewLifecycleOwner, androidx.lifecycle.Observer {
@@ -222,12 +194,13 @@ class AddNewMomentFragment : Fragment() {
 
     private fun createMoment(downloadURL: String, resizedDownloadURL: String):ModelMoments{
         val sender = viewModel.getUser().email
+        val senderUserName = viewModel.getUserName()
         val date = dayMoment
         val dateAdded = DateTimeConverter().getCurrentTime()
         val text = binding.comment.text.toString()
         val id = IDGenerator().generateMomentID(dayMoment,sender!!)
 
-        return ModelMoments(id,sender,date,dateAdded,downloadURL,resizedDownloadURL,text)
+        return ModelMoments(id,sender,senderUserName,date,dateAdded,downloadURL,resizedDownloadURL,text)
     }
 
     private fun registerLauncher(){

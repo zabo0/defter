@@ -25,6 +25,7 @@
             android:padding="10dp">
 
             <TextView
+                android:id="@+id/textView_homeRecyclerView_date"
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
                 android:textColor="?attr/colorOnPrimary"
@@ -33,25 +34,30 @@
                 android:textSize="18sp" />
 
             <ImageView
+                android:id="@+id/imageView_homeRecyclerView_senderSecond"
                 android:layout_width="wrap_content"
                 android:layout_height="match_parent"
                 android:layout_marginRight="10dp"
+                android:visibility="gone"
                 android:background="@drawable/bg_bottom_navigation"
                 android:src="@drawable/ic_baseline_account_circle_24" />
 
             <ImageView
+                android:id="@+id/imageView_homeRecyclerView_senderFirst"
                 android:layout_width="wrap_content"
                 android:layout_height="match_parent"
+                android:visibility="gone"
                 android:background="@drawable/bg_bottom_navigation"
                 android:src="@drawable/ic_baseline_account_circle_24" />
         </LinearLayout>
 
 
         <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/recyclerView_homeRecyclerView"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             tools:itemCount="2"
-            tools:listitem="@layout/recycler_row_home_fragment_child" />
+            tools:listitem="@layout/recycler_row_home_fragment_child"/>
 
 
     </LinearLayout>

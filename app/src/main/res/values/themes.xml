@@ -15,7 +15,6 @@
         <!-- Customize your theme here. -->
 
 
-
         <item name="background">@color/A5</item>
         <item name="colorOnBackground">@color/A10</item>
         <item name="colorSurface">@color/A6</item>
@@ -24,5 +23,10 @@
         <item name="colorError">@color/A7</item>
         <item name="colorOnError">@color/A12</item>
 
+    </style>
+
+    <style name="ThemeOverlay.Defter.FullscreenContainer" parent="">
+        <item name="fullscreenBackgroundColor">@color/light_blue_600</item>
+        <item name="fullscreenTextColor">@color/light_blue_A200</item>
     </style>
 </resources>
