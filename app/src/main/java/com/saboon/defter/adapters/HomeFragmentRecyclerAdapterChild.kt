@@ -24,9 +24,9 @@ class HomeFragmentRecyclerAdapterChild(private val moments:List<ModelMoments>):R
     }
 
     override fun onBindViewHolder(holder: HomeFragmentChildViewHolder, position: Int) {
-        Glide.with(holder.itemView.context)
-            .load(moments[position].resizedPhotoURL)
-            .into(holder.momentImage)
+//        Glide.with(holder.itemView.context)
+//            .load(moments[position].resizedPhotoURL)
+//            .into(holder.momentImage)
         holder.userName.text = moments[position].senderUserName
         holder.userComment.text = moments[position].text
     }

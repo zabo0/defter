@@ -4,6 +4,8 @@ import android.Manifest
 import android.app.Activity.RESULT_OK
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.Bitmap
+import android.graphics.ImageDecoder
 import android.net.Uri
 import android.os.Bundle
 import android.provider.MediaStore
@@ -17,9 +19,7 @@ import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
-import androidx.navigation.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.bumptech.glide.Glide
 import com.google.android.material.datepicker.MaterialDatePicker
 import com.google.android.material.snackbar.Snackbar
 import com.saboon.defter.R
@@ -28,6 +28,8 @@ import com.saboon.defter.databinding.FragmentAddNewMomentBinding
 import com.saboon.defter.models.ModelMoments
 import com.saboon.defter.utils.*
 import com.saboon.defter.viewmodels.AddNewMomentFragmentViewModel
+import java.io.ByteArrayOutputStream
+import java.util.*
 
 
 class AddNewMomentFragment : Fragment() {
@@ -41,9 +43,12 @@ class AddNewMomentFragment : Fragment() {
 
     private lateinit var viewModel: AddNewMomentFragmentViewModel
 
-    private var dayMoment: Long = 0
-    private var selectedPicture: Uri? = null
-    private var dailyRemainingMoments = "0"
+    private var dateOfMoment: Long = 0
+    //private var selectedPictureURI: Uri? = null
+    private var selectedPhotoBitmap : Bitmap? = null
+    private var dailyMomentPhotoURLsList: ArrayList<String> = arrayListOf()
+
+    private val recyclerAdapter = AddMomentFragmentRecyclerAdapter(arrayListOf())
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -66,81 +71,79 @@ class AddNewMomentFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-
-        viewModel.getDailyRemainingMoments()
-
         viewModel.getDailyMoments()
 
-        dayMoment = DateTimeConverter().getCurrentTime()
-        binding.date.setText(DateTimeConverter().getTime(dayMoment, "dd MMMM yyyy"))
+        dateOfMoment = DateTimeConverter().getCurrentTime()
+        binding.date.setText(DateTimeConverter().getTime(dateOfMoment, "dd MMMM yyyy"))
 
 
         binding.recyclerViewDailyMoments.layoutManager = LinearLayoutManager(context,LinearLayoutManager.HORIZONTAL,false)
-
+        binding.recyclerViewDailyMoments.adapter = recyclerAdapter
 
         binding.date.setOnClickListener {
             getDay {
-                dayMoment = it!!
-                val date = DateTimeConverter().getTime(dayMoment,"dd MMMM yyyy")
+                dateOfMoment = it!!
+                val date = DateTimeConverter().getTime(dateOfMoment,"dd MMMM yyyy")
                 binding.date.setText(date)
             }
         }
 
 
-        binding.imageViewAddPhoto.setOnClickListener {
-            binding.buttonAdd.text = resources.getString(R.string.add)
-            binding.updateSuccessText.visibility = View.GONE
-            if (dailyRemainingMoments == "0"){
-                Toast.makeText(requireContext(),"can not add more then 3 moment",Toast.LENGTH_LONG).show()
-            }else{
-                goToGallery(it)
+        binding.imageViewSelectPhoto.setOnClickListener { view ->
+            viewModel.getDailySentMomentsNumber {
+                val ten: Long = 10
+                if (it == ten){
+                    Toast.makeText(requireContext(),resources.getString(R.string.cantAddMoment),Toast.LENGTH_LONG).show()
+                }else{
+                    goToGallery(view)
+                }
             }
+
         }
 
         binding.buttonAdd.setOnClickListener {view->
+            viewModel.getDailySentMomentsNumber { dailySentMomentsNumber ->
+                val ten: Long = 10
+                if (dailySentMomentsNumber == ten){
+                    Toast.makeText(requireContext(),resources.getString(R.string.cantAddMoment),Toast.LENGTH_LONG).show()
+                }else{
+                    if(selectedPhotoBitmap != null){
+                        val resizedPhotoBitmap = makeSmallerBitmap(selectedPhotoBitmap!!,500)
 
-            val action = AddNewMomentFragmentDirections.actionAddNewMomentFragmentToImageViewerFragment()
-            view.findNavController().navigate(action)
+                        val outputStream = ByteArrayOutputStream()
+                        val resizedOutputStream = ByteArrayOutputStream()
 
-//            if (dailyRemainingMoments == "0"){
-//                Toast.makeText(requireContext(),resources.getString(R.string.cantAddMoment),Toast.LENGTH_LONG).show()
-//            }else{
-//                when(binding.buttonAdd.text){
-//                    resources.getString(R.string.add) -> {
-//                        if(selectedPicture != null){
-//
-//                            viewModel.addPhotoToStorage(selectedPicture!!,dayMoment){downloadURL, resizedDownloadURL ->
-//                                moment = createMoment(downloadURL,resizedDownloadURL)
-//
-//                                viewModel.addMoment(moment){
-//                                    if(it){
-//                                        binding.updateSuccessText.visibility = View.VISIBLE
-//                                        binding.buttonAdd.isEnabled = true
-//                                        binding.buttonAdd.text = resources.getString(R.string.addNew)
-//                                        binding.imageViewAddPhoto.setImageResource(R.drawable.avatars)
-//                                        binding.comment.setText("")
-//                                        binding.comment.clearFocus()
-//                                        Toast.makeText(requireContext(),resources.getString(R.string.momentAdded),Toast.LENGTH_LONG).show()
-//
-//                                        viewModel.updateUserRemaining(resizedDownloadURL,dailyRemainingMoments)
-//                                        viewModel.updateUserMomentsNumber()
-//
-//                                    }
-//                                }
-//                            }
-//
-//                        }else{
-//                            Toast.makeText(requireContext(),resources.getString(R.string.pleaseSelectPhoto),Toast.LENGTH_LONG).show()
-//                        }
-//                    }
-//
-//                    resources.getString(R.string.addNew) -> {
-//                        goToGallery(view)
-//                        binding.buttonAdd.text = resources.getString(R.string.add)
-//                        binding.updateSuccessText.visibility = View.GONE
-//                    }
-//                }
-//            }
+                        selectedPhotoBitmap!!.compress(Bitmap.CompressFormat.JPEG,100,outputStream)
+                        val selectedPhotoByteArray = outputStream.toByteArray()
+
+                        resizedPhotoBitmap.compress(Bitmap.CompressFormat.JPEG,100,resizedOutputStream)
+                        val resizedPhotoByteArray = resizedOutputStream.toByteArray()
+
+
+                        viewModel.addPhotosToStorage(selectedPhotoByteArray,resizedPhotoByteArray, dateOfMoment){ photoURL, resizedPhotoURL ->
+                            moment = createMoment(photoURL,resizedPhotoURL)
+
+                            viewModel.addMoment(moment){
+                                if(it){
+                                    binding.updateSuccessText.visibility = View.VISIBLE
+                                    binding.loadingLayout.visibility = View.GONE
+                                    binding.buttonAdd.isEnabled = false
+                                    binding.imageViewSelectPhoto.setImageResource(R.drawable.avatars)
+                                    binding.comment.setText("")
+                                    binding.comment.clearFocus()
+                                    Toast.makeText(requireContext(),resources.getString(R.string.momentAdded),Toast.LENGTH_LONG).show()
+
+                                    viewModel.getTotalMomentsNumber {totalMomentsNumber->
+                                        viewModel.updateDailySentMoments(moment.id,resizedPhotoURL,dailySentMomentsNumber,totalMomentsNumber)
+                                    }
+                                    recyclerAdapter.insertNewItem(resizedPhotoURL)
+                                    binding.recyclerViewDailyMoments.smoothScrollToPosition(0)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
         observer()
     }
@@ -150,18 +153,14 @@ class AddNewMomentFragment : Fragment() {
     private fun observer(){
         viewModel.dailyMoments.observe(viewLifecycleOwner, Observer {
             if(it != null){
+                dailyMomentPhotoURLsList = it
                 binding.recyclerViewDailyMoments.visibility = View.VISIBLE
-                binding.recyclerViewDailyMoments.adapter = AddMomentFragmentRecyclerAdapter(it)
+                recyclerAdapter.updateAllList(dailyMomentPhotoURLsList)
             }else{
                 binding.recyclerViewDailyMoments.visibility = View.GONE
             }
         })
-        viewModel.dailyRemainingMoment.observe(viewLifecycleOwner, androidx.lifecycle.Observer {
-            if(it!= null){
-                dailyRemainingMoments = it
-//                binding.editTextRemaining.text = it
-            }
-        })
+
         viewModel.loading.observe(viewLifecycleOwner, androidx.lifecycle.Observer {
             if (it){
                 binding.loadingLayout.visibility = View.VISIBLE
@@ -178,6 +177,7 @@ class AddNewMomentFragment : Fragment() {
         })
     }
 
+
     private fun getDay(callback: (Long?) -> Unit){
         val datePicker = MaterialDatePicker.Builder.datePicker()
             .setSelection(MaterialDatePicker.todayInUtcMilliseconds())
@@ -192,15 +192,15 @@ class AddNewMomentFragment : Fragment() {
         }
     }
 
-    private fun createMoment(downloadURL: String, resizedDownloadURL: String):ModelMoments{
+    private fun createMoment(photoURL: String, resizedPhotoURL: String):ModelMoments{
         val sender = viewModel.getUser().email
         val senderUserName = viewModel.getUserName()
-        val date = dayMoment
+        val date = dateOfMoment
         val dateAdded = DateTimeConverter().getCurrentTime()
         val text = binding.comment.text.toString()
-        val id = IDGenerator().generateMomentID(dayMoment,sender!!)
+        val id = IDGenerator().generateMomentID(dateAdded,sender!!)
 
-        return ModelMoments(id,sender,senderUserName,date,dateAdded,downloadURL,resizedDownloadURL,text)
+        return ModelMoments(id,sender,senderUserName,date,dateAdded,photoURL,resizedPhotoURL,text)
     }
 
     private fun registerLauncher(){
@@ -208,10 +208,14 @@ class AddNewMomentFragment : Fragment() {
             if(result.resultCode == RESULT_OK){
                 val intentFromResult = result.data
                 if (intentFromResult!=null){
-                    selectedPicture = intentFromResult.data
-                    selectedPicture.let {
-                        binding.imageViewAddPhoto.setImageURI(it)
+                    val selectedPhotoURI = intentFromResult.data
+                    selectedPhotoURI.let {
+                        binding.updateSuccessText.visibility = View.GONE
+                        uriToBitmap(selectedPhotoURI!!)
+                        binding.imageViewSelectPhoto.setImageBitmap(selectedPhotoBitmap)
+                        binding.buttonAdd.isEnabled = true
                     }
+
                 }
             }
         }
@@ -225,6 +229,32 @@ class AddNewMomentFragment : Fragment() {
                     Toast.makeText(requireContext(),resources.getString(R.string.permission),Toast.LENGTH_LONG).show()
                 }
             }
+    }
+
+    private fun uriToBitmap(uri: Uri){
+        try {
+            val source = ImageDecoder.createSource(requireActivity().contentResolver, uri)
+            selectedPhotoBitmap = ImageDecoder.decodeBitmap(source)
+        }catch (e: Exception){
+            Toast.makeText(requireContext(),e.localizedMessage,Toast.LENGTH_LONG).show()
+        }
+    }
+
+    private fun makeSmallerBitmap(image: Bitmap, maximumSize : Int) : Bitmap {
+        var width = image.width
+        var height = image.height
+
+        val bitmapRatio : Double = width.toDouble() / height.toDouble()
+        if (bitmapRatio > 1) {
+            width = maximumSize
+            val scaledHeight = width / bitmapRatio
+            height = scaledHeight.toInt()
+        } else {
+            height = maximumSize
+            val scaledWidth = height * bitmapRatio
+            width = scaledWidth.toInt()
+        }
+        return Bitmap.createScaledBitmap(image,width,height,true)
     }
 
     private fun goToGallery(view: View){

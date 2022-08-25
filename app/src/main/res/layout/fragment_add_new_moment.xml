@@ -47,7 +47,7 @@
                 app:cardCornerRadius="25dp">
 
                 <ImageView
-                    android:id="@+id/imageView_addPhoto"
+                    android:id="@+id/imageView_selectPhoto"
                     android:layout_width="match_parent"
                     android:layout_height="200dp"
                     android:background="?attr/colorPrimary"
@@ -160,6 +160,7 @@
                         android:id="@+id/button_add"
                         android:layout_width="100dp"
                         android:layout_height="wrap_content"
+                        android:enabled="false"
                         android:text="@string/add" />
                 </LinearLayout>
 

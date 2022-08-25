@@ -12,7 +12,7 @@ class IDGenerator {
 
     fun generateMomentID(date: Long, sender: String): String{
         val randomID = UUID.randomUUID().toString()
-        return DateTimeConverter().getTime(date,"dd_MMMM_yyyy_HH:mm:ss") + "_" + sender  + "_" + randomID
+        return DateTimeConverter().getTime(date,"dd_MM_yyyy_HH:mm:ss") + "_" + sender  + "_" + randomID
     }
 
 }

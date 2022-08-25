@@ -1,14 +1,20 @@
 package com.saboon.defter.adapters
 
+import android.app.Application
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.saboon.defter.R
+import com.saboon.defter.viewmodels.AddNewMomentFragmentViewModel
 import de.hdodenhof.circleimageview.CircleImageView
 
-class AddMomentFragmentRecyclerAdapter(private val dailyMomentsList: List<String>):RecyclerView.Adapter<AddMomentFragmentRecyclerAdapter.ViewHolder>() {
+class AddMomentFragmentRecyclerAdapter(private val dailyMomentPhotoURLsList: ArrayList<String>):RecyclerView.Adapter<AddMomentFragmentRecyclerAdapter.ViewHolder>() {
+
+
+
     class ViewHolder(view: View):RecyclerView.ViewHolder(view) {
         val imgView : CircleImageView = view.findViewById(R.id.dailyMomentsIMG)
     }
@@ -20,11 +26,23 @@ class AddMomentFragmentRecyclerAdapter(private val dailyMomentsList: List<String
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         Glide.with(holder.itemView.context)
-            .load(dailyMomentsList[position])
+            .load(dailyMomentPhotoURLsList[position])
             .into(holder.imgView)
     }
 
     override fun getItemCount(): Int {
-        return dailyMomentsList.size
+        return dailyMomentPhotoURLsList.size
+    }
+
+    fun updateAllList(newList: ArrayList<String>){
+        dailyMomentPhotoURLsList.clear()
+        dailyMomentPhotoURLsList.addAll(newList)
+        notifyDataSetChanged()
+    }
+
+    fun insertNewItem(newItem: String){
+        dailyMomentPhotoURLsList.add(0,newItem)
+        notifyItemInserted(0)
+        notifyItemChanged(0)
     }
 }

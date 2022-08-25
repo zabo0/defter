@@ -1,7 +1,6 @@
 package com.saboon.defter.viewmodels
 
 import android.app.Application
-import android.net.Uri
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.MutableLiveData
 import com.google.firebase.auth.FirebaseAuth
@@ -13,9 +12,6 @@ import com.google.firebase.storage.FirebaseStorage
 import com.google.firebase.storage.ktx.storage
 import com.saboon.defter.models.ModelMoments
 import com.saboon.defter.utils.*
-import java.util.*
-import kotlin.collections.ArrayList
-import kotlin.concurrent.schedule
 
 class AddNewMomentFragmentViewModel(application: Application): AndroidViewModel(application) {
 
@@ -23,8 +19,8 @@ class AddNewMomentFragmentViewModel(application: Application): AndroidViewModel(
     private var storage: FirebaseStorage = Firebase.storage
     private var firestore: FirebaseFirestore = Firebase.firestore
 
-    var dailyMoments = MutableLiveData<List<String>?>()
-    //var dailyRemainingMoment = MutableLiveData<String>()
+    var dailyMoments = MutableLiveData<ArrayList<String>?>()
+    var dailyMoment = MutableLiveData<String?>()
     var progress = MutableLiveData<Int>()
     var loading = MutableLiveData<Boolean>()
     var error = MutableLiveData<String>()
@@ -38,50 +34,42 @@ class AddNewMomentFragmentViewModel(application: Application): AndroidViewModel(
         firestore.collection(COLLECTION_DAILY_MOMENTS).document(auth.currentUser!!.uid).get()
             .addOnSuccessListener {
                 if(it.exists()){
-                    val momentList = arrayListOf<String>()
                     val momentMap = it.data
+                    val urlList: ArrayList<String> = arrayListOf()
 
                     if(momentMap != null){
                         for(entry in momentMap.entries){
-                            if (entry.key.toString() != "dailyMoments" && entry.value.toString() != "null"){
-                                momentList.add(entry.value.toString())
+                            if (entry.key.toString() != "dailyMoments" && entry.key.toString() != "totalMoments" && entry.value.toString() != "null"){
+                                val moment = entry.value.toString()
+                                urlList.add(getURL(moment))
                             }
                         }
+                        dailyMoments.value = urlList
                     }
-                    dailyMoments.value = momentList
                 }
             }.addOnFailureListener {
                 error.value = it.localizedMessage
             }
     }
-    fun getDailyRemainingMoments(result: (String) -> Unit){
-        firestore.collection(COLLECTION_DAILY_MOMENTS).document(auth.currentUser!!.uid).get()
-            .addOnSuccessListener {
-                if (it != null){
-                    //dailyRemainingMoment.value = it.data?.get("dailyMoments").toString()
-                    result(it.data?.get("dailyMoments").toString())
-                }
-            }
-    }
 
-    fun addPhotoToStorage(selectedPhoto: Uri, dayMoment: Long, downloadURLs: (String, String) -> Unit){
+
+    fun addPhotosToStorage(selectedPhotoByteArray: ByteArray, resizedPhotoByteArray: ByteArray, dayMoment: Long, photoURLs: (String, String) -> Unit){
         loading.value = true
         val photoID = IDGenerator().generateMomentPhotoID(dayMoment)
         val photoRef = storage.reference.child(PATH_TO_MOMENTS_PHOTOS).child(photoID + ".jpg")
-        val resizedPhotoRef = storage.reference.child(PATH_TO_MOMENTS__RESIZED_PHOTOS).child(photoID+"_200x200.jpg")
-        photoRef.putFile(selectedPhoto).addOnProgressListener {taskSnapshot->
+        val resizedPhotoRef = storage.reference.child(PATH_TO_MOMENTS_RESIZED_PHOTOS).child(photoID+"_200x200.jpg")
+
+        photoRef.putBytes(selectedPhotoByteArray).addOnProgressListener { taskSnapshot->
             val prog: Double = 100.0 * taskSnapshot.bytesTransferred / taskSnapshot.totalByteCount
             progress.value = prog.toInt()
         }.addOnSuccessListener{
-            photoRef.downloadUrl.addOnSuccessListener {downloadURL->
-                Timer().schedule(5000) {
-                    resizedPhotoRef.downloadUrl.addOnSuccessListener {resizedDownloadURL->
-                        downloadURLs(downloadURL.toString(),resizedDownloadURL.toString())
-                        loading.value = false
+            resizedPhotoRef.putBytes(resizedPhotoByteArray).addOnProgressListener { taskSnapshot->
+            }.addOnSuccessListener {
+                photoRef.downloadUrl.addOnSuccessListener { photoURL->
+                        resizedPhotoRef.downloadUrl.addOnSuccessListener {resizedPhotoURL ->
+                                photoURLs(photoURL.toString(),resizedPhotoURL.toString())
+                            }
                     }
-                }
-            }.addOnFailureListener {e->
-                error.value = e.localizedMessage
             }
         }.addOnFailureListener {e->
             error.value = e.localizedMessage
@@ -89,7 +77,7 @@ class AddNewMomentFragmentViewModel(application: Application): AndroidViewModel(
     }
 
     fun addMoment(moment: ModelMoments, result: (Boolean) -> Unit){
-        firestore.collection(COLLECTION_MOMENTS).document(IDGenerator().generateMomentID(moment.date,moment.sender))
+        firestore.collection(COLLECTION_MOMENTS).document(moment.id)
             .set(moment).addOnSuccessListener {
                 result(true)
             }.addOnFailureListener { e->
@@ -99,41 +87,47 @@ class AddNewMomentFragmentViewModel(application: Application): AndroidViewModel(
 
     }
 
-    fun updateUserRemaining(resizedDownloadURL: String, dailyRemainingMoments: String){
-        var dailyRemainingIDString = "0"
-        var dailyRemainingNumber = "0"
-
-        firestore.collection(COLLECTION_USERS).document(auth.currentUser!!.uid).update(
-            mapOf(
-                dailyRemainingIDString to resizedDownloadURL,
-                "dailyRemaining" to dailyRemainingNumber
-            )
-        )
-
-        //dailyRemainingMoment.value = dailyRemainingNumber
-    }
-
-    private fun getUserMomentsNumber(moments: (Long) -> Unit){
-        firestore.collection(COLLECTION_USERS).document(auth.currentUser!!.uid).get()
+    fun getDailySentMomentsNumber(result: (Long) -> Unit){
+        firestore.collection(COLLECTION_DAILY_MOMENTS).document(auth.currentUser!!.uid).get()
             .addOnSuccessListener {
-                if(it != null){
-                    moments(it.getLong("moments")!!)
+                if (it != null){
+                    result(it.getLong("dailyMoments")!!)
                 }
             }
-            .addOnFailureListener { e->
+    }
+
+    fun updateDailySentMoments(momentID: String, resizedPhotoURL: String, dailyMomentsNumber: Long, totalMomentsNumber: Long){
+
+        getDailySentMomentsNumber {
+            firestore.collection(COLLECTION_DAILY_MOMENTS).document(auth.currentUser!!.uid).update(
+                mapOf(
+                    "dailyMomentID_URL_0$it" to "$momentID+$resizedPhotoURL",
+                    "dailyMoments" to dailyMomentsNumber+1,
+                    "totalMoments" to totalMomentsNumber+1
+                )
+            ).addOnFailureListener { e->
                 error.value = e.localizedMessage
+            }
+        }
+    }
+
+    fun getTotalMomentsNumber(result: (Long) -> Unit){
+        firestore.collection(COLLECTION_DAILY_MOMENTS).document(auth.currentUser!!.uid).get()
+            .addOnSuccessListener {
+                if(it != null){
+                    result(it.getLong("totalMoments")!!)
+                }
             }
     }
 
-    fun updateUserMomentsNumber(){
-        getUserMomentsNumber {
-            val moments = it + 1
-            firestore.collection(COLLECTION_USERS).document(auth.currentUser!!.uid).update(
-                mapOf(
-                    "moments" to moments
-                )
-            )
-        }
+    private fun getURL(value:String):String{
+        val stringArray = value.split("+")
+        return stringArray[1]
+    }
+
+    private fun getID(value:String):String{
+        val stringArray = value.split("+")
+        return stringArray[0]
     }
 
     fun getUserName(): String{
@@ -142,7 +136,7 @@ class AddNewMomentFragmentViewModel(application: Application): AndroidViewModel(
             .get()
             .addOnSuccessListener {
                 if (it!= null){
-                    userName = it.data!!["userName"] as String
+                    userName = it.get("userName") as String
                 }
             }.addOnFailureListener {
                 userName = "null"
