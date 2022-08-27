@@ -18,6 +18,9 @@
         <action
             android:id="@+id/action_addNewMomentFragment_to_imageViewerFragment"
             app:destination="@id/imageViewerFragment" />
+        <action
+            android:id="@+id/action_addNewMomentFragment_to_momentPreviewerFragment"
+            app:destination="@id/momentPreviewerFragment" />
     </fragment>
     <fragment
         android:id="@+id/datesFragment"
@@ -32,5 +35,17 @@
         <action
             android:id="@+id/action_imageViewerFragment_to_addNewMomentFragment"
             app:destination="@id/addNewMomentFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/momentPreviewerFragment"
+        android:name="com.saboon.defter.fragments.MomentPreviewerFragment"
+        android:label="fragment_moment_previewer"
+        tools:layout="@layout/fragment_moment_previewer" >
+        <action
+            android:id="@+id/action_momentPreviewerFragment_to_addNewMomentFragment"
+            app:destination="@id/addNewMomentFragment" />
+        <argument
+            android:name="momentID"
+            app:argType="string" />
     </fragment>
 </navigation>

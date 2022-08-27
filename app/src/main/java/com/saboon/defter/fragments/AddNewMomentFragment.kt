@@ -1,28 +1,19 @@
 package com.saboon.defter.fragments
 
-import android.Manifest
-import android.app.Activity.RESULT_OK
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.graphics.Bitmap
-import android.graphics.ImageDecoder
-import android.net.Uri
 import android.os.Bundle
-import android.provider.MediaStore
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import androidx.activity.result.ActivityResultLauncher
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.android.material.datepicker.MaterialDatePicker
-import com.google.android.material.snackbar.Snackbar
 import com.saboon.defter.R
 import com.saboon.defter.adapters.AddMomentFragmentRecyclerAdapter
 import com.saboon.defter.databinding.FragmentAddNewMomentBinding
@@ -47,7 +38,7 @@ class AddNewMomentFragment : Fragment() {
     private var dateOfMoment: Long = 0
     //private var selectedPictureURI: Uri? = null
 //    private var selectedPhotoBitmap : Bitmap? = null
-    private var dailyMomentPhotoURLsList: ArrayList<String> = arrayListOf()
+    private var dailyMomentPhotos_ID_URL_List: ArrayList<String> = arrayListOf()
 
     private val recyclerAdapter = AddMomentFragmentRecyclerAdapter(arrayListOf())
 
@@ -116,7 +107,7 @@ class AddNewMomentFragment : Fragment() {
                     Toast.makeText(requireContext(),resources.getString(R.string.cantAddMoment),Toast.LENGTH_LONG).show()
                 }else{
                     if(SelectedImageSingleton.selectedImageBitmap != null){
-                        val resizedPhotoBitmap = makeSmallerBitmap(SelectedImageSingleton.selectedImageBitmap!!,500)
+                        val resizedPhotoBitmap = makeSmallerBitmap(SelectedImageSingleton.selectedImageBitmap!!)
 
                         val outputStream = ByteArrayOutputStream()
                         val resizedOutputStream = ByteArrayOutputStream()
@@ -129,26 +120,24 @@ class AddNewMomentFragment : Fragment() {
 
 
                         viewModel.addPhotosToStorage(selectedPhotoByteArray,resizedPhotoByteArray, dateOfMoment){ photoURL, resizedPhotoURL ->
-                            createMoment(photoURL,resizedPhotoURL){
-                                moment = it
+                            moment = createMoment(photoURL,resizedPhotoURL)
 
-                                viewModel.addMoment(moment){
-                                    if(it){
-                                        binding.updateSuccessText.visibility = View.VISIBLE
-                                        binding.loadingLayout.visibility = View.GONE
-                                        binding.buttonAdd.isEnabled = false
-                                        binding.imageViewSelectPhoto.setImageResource(R.drawable.avatars)
-                                        SelectedImageSingleton.selectedImageBitmap = null
-                                        binding.comment.setText("")
-                                        binding.comment.clearFocus()
-                                        Toast.makeText(requireContext(),resources.getString(R.string.momentAdded),Toast.LENGTH_LONG).show()
+                            viewModel.addMoment(moment){
+                                if(it){
+                                    binding.updateSuccessText.visibility = View.VISIBLE
+                                    binding.loadingLayout.visibility = View.GONE
+                                    binding.buttonAdd.isEnabled = false
+                                    binding.imageViewSelectPhoto.setImageResource(R.drawable.avatars)
+                                    SelectedImageSingleton.selectedImageBitmap = null
+                                    binding.comment.setText("")
+                                    binding.comment.clearFocus()
+                                    Toast.makeText(requireContext(),resources.getString(R.string.momentAdded),Toast.LENGTH_LONG).show()
 
-                                        viewModel.getTotalMomentsNumber {totalMomentsNumber->
-                                            viewModel.updateDailySentMoments(moment.id,resizedPhotoURL,dailySentMomentsNumber,totalMomentsNumber)
-                                        }
-                                        recyclerAdapter.insertNewItem(resizedPhotoURL)
-                                        binding.recyclerViewDailyMoments.smoothScrollToPosition(0)
+                                    viewModel.getTotalMomentsNumber {totalMomentsNumber->
+                                        viewModel.updateDailySentMoments(moment.id,resizedPhotoURL,dailySentMomentsNumber,totalMomentsNumber)
                                     }
+                                    recyclerAdapter.insertNewItem(moment.id + "+" + resizedPhotoURL)
+                                    binding.recyclerViewDailyMoments.smoothScrollToPosition(0)
                                 }
                             }
 
@@ -165,11 +154,11 @@ class AddNewMomentFragment : Fragment() {
 
 
     private fun observer(){
-        viewModel.dailyMoments.observe(viewLifecycleOwner, Observer {
+        viewModel.dailyMoments_ID_URL_list.observe(viewLifecycleOwner, Observer {
             if(it != null){
-                dailyMomentPhotoURLsList = it
+                dailyMomentPhotos_ID_URL_List = it
                 binding.recyclerViewDailyMoments.visibility = View.VISIBLE
-                recyclerAdapter.updateAllList(dailyMomentPhotoURLsList)
+                recyclerAdapter.updateAllList(dailyMomentPhotos_ID_URL_List)
             }else{
                 binding.recyclerViewDailyMoments.visibility = View.GONE
             }
@@ -206,23 +195,21 @@ class AddNewMomentFragment : Fragment() {
         }
     }
 
-    private fun createMoment(photoURL: String, resizedPhotoURL: String, result:(ModelMoments)->Unit){
-        val sender = viewModel.getUser().email
+    private fun createMoment(photoURL: String, resizedPhotoURL: String): ModelMoments{
+        val senderUID = viewModel.getUser().uid
+        val senderEmail = viewModel.getUser().email
         val date = dateOfMoment
         val dateAdded = DateTimeConverter().getCurrentTime()
         val text = binding.comment.text.toString()
-        val id = IDGenerator().generateMomentID(dateAdded,sender!!)
-
-        viewModel.getUserName {
-            val senderUserName = it
-            result(ModelMoments(id,sender,senderUserName,date,dateAdded,photoURL,resizedPhotoURL,text))
-        }
+        val id = IDGenerator().generateMomentID(dateAdded,senderEmail!!)
+        return ModelMoments(id,senderUID,date,dateAdded,photoURL,resizedPhotoURL,text)
     }
 
 
-    private fun makeSmallerBitmap(image: Bitmap, maximumSize : Int) : Bitmap {
+    private fun makeSmallerBitmap(image: Bitmap) : Bitmap {
         var width = image.width
         var height = image.height
+        val maximumSize = 800
 
         val bitmapRatio : Double = width.toDouble() / height.toDouble()
         if (bitmapRatio > 1) {

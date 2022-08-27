@@ -33,4 +33,6 @@
     <string name="page_selectPhoto">Select Photo</string>
     <string name="turnLeft">Turn Left</string>
     <string name="turnRight">Turn Right</string>
+    <string name="delete">Delete</string>
+    <string name="deleteThisMoment">Delete This Moment</string>
 </resources>

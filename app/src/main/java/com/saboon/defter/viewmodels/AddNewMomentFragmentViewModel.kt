@@ -19,7 +19,7 @@ class AddNewMomentFragmentViewModel(application: Application): AndroidViewModel(
     private var storage: FirebaseStorage = Firebase.storage
     private var firestore: FirebaseFirestore = Firebase.firestore
 
-    var dailyMoments = MutableLiveData<ArrayList<String>?>()
+    var dailyMoments_ID_URL_list = MutableLiveData<ArrayList<String>?>()
     var progress = MutableLiveData<Int>()
     var loading = MutableLiveData<Boolean>()
     var error = MutableLiveData<String>()
@@ -40,10 +40,10 @@ class AddNewMomentFragmentViewModel(application: Application): AndroidViewModel(
                         for(entry in momentMap.entries){
                             if (entry.key.toString() != "dailyMoments" && entry.key.toString() != "totalMoments" && entry.value.toString() != "null"){
                                 val moment = entry.value.toString()
-                                urlList.add(getURL(moment))
+                                urlList.add(moment)
                             }
                         }
-                        dailyMoments.value = urlList
+                        dailyMoments_ID_URL_list.value = urlList
                     }
                 }
             }.addOnFailureListener {

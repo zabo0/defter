@@ -1,17 +1,16 @@
 package com.saboon.defter.adapters
 
-import android.app.Application
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.lifecycle.ViewModelProvider
+import androidx.navigation.findNavController
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.saboon.defter.R
-import com.saboon.defter.viewmodels.AddNewMomentFragmentViewModel
+import com.saboon.defter.fragments.AddNewMomentFragmentDirections
 import de.hdodenhof.circleimageview.CircleImageView
 
-class AddMomentFragmentRecyclerAdapter(private val dailyMomentPhotoURLsList: ArrayList<String>):RecyclerView.Adapter<AddMomentFragmentRecyclerAdapter.ViewHolder>() {
+class AddMomentFragmentRecyclerAdapter(private val dailyMomentPhotos_ID_URL_list: ArrayList<String>):RecyclerView.Adapter<AddMomentFragmentRecyclerAdapter.ViewHolder>() {
 
 
 
@@ -26,23 +25,38 @@ class AddMomentFragmentRecyclerAdapter(private val dailyMomentPhotoURLsList: Arr
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         Glide.with(holder.itemView.context)
-            .load(dailyMomentPhotoURLsList[position])
+            .load(getURL(dailyMomentPhotos_ID_URL_list[position]))
             .into(holder.imgView)
+
+        holder.itemView.setOnClickListener {
+            val action = AddNewMomentFragmentDirections.actionAddNewMomentFragmentToMomentPreviewerFragment(getID(dailyMomentPhotos_ID_URL_list[position]))
+            it.findNavController().navigate(action)
+        }
     }
 
     override fun getItemCount(): Int {
-        return dailyMomentPhotoURLsList.size
+        return dailyMomentPhotos_ID_URL_list.size
     }
 
     fun updateAllList(newList: ArrayList<String>){
-        dailyMomentPhotoURLsList.clear()
-        dailyMomentPhotoURLsList.addAll(newList)
+        dailyMomentPhotos_ID_URL_list.clear()
+        dailyMomentPhotos_ID_URL_list.addAll(newList)
         notifyDataSetChanged()
     }
 
     fun insertNewItem(newItem: String){
-        dailyMomentPhotoURLsList.add(0,newItem)
+        dailyMomentPhotos_ID_URL_list.add(0,newItem)
         notifyItemInserted(0)
         notifyItemChanged(0)
+    }
+
+    private fun getURL(value:String):String{
+        val stringArray = value.split("+")
+        return stringArray[1]
+    }
+
+    private fun getID(value:String):String{
+        val stringArray = value.split("+")
+        return stringArray[0]
     }
 }

@@ -6,7 +6,6 @@ import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
-import com.bumptech.glide.Glide
 import com.saboon.defter.R
 import com.saboon.defter.models.ModelMoments
 
@@ -24,11 +23,7 @@ class HomeFragmentRecyclerAdapterChild(private val moments:List<ModelMoments>):R
     }
 
     override fun onBindViewHolder(holder: HomeFragmentChildViewHolder, position: Int) {
-//        Glide.with(holder.itemView.context)
-//            .load(moments[position].resizedPhotoURL)
-//            .into(holder.momentImage)
-        holder.userName.text = moments[position].senderUserName
-        holder.userComment.text = moments[position].text
+
     }
 
     override fun getItemCount(): Int {
