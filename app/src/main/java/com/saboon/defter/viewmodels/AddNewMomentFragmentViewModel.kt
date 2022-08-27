@@ -20,7 +20,6 @@ class AddNewMomentFragmentViewModel(application: Application): AndroidViewModel(
     private var firestore: FirebaseFirestore = Firebase.firestore
 
     var dailyMoments = MutableLiveData<ArrayList<String>?>()
-    var dailyMoment = MutableLiveData<String?>()
     var progress = MutableLiveData<Int>()
     var loading = MutableLiveData<Boolean>()
     var error = MutableLiveData<String>()
@@ -130,18 +129,18 @@ class AddNewMomentFragmentViewModel(application: Application): AndroidViewModel(
         return stringArray[0]
     }
 
-    fun getUserName(): String{
-        var userName = "null"
+    fun getUserName(result:(String)->Unit){
+        var userName: String
         firestore.collection(COLLECTION_USERS).document(auth.currentUser!!.uid)
             .get()
             .addOnSuccessListener {
                 if (it!= null){
                     userName = it.get("userName") as String
+                    result(userName)
                 }
             }.addOnFailureListener {
-                userName = "null"
+                result("null")
             }
-        return userName
     }
 
 

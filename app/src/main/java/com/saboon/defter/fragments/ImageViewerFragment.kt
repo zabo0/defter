@@ -1,187 +1,194 @@
 package com.saboon.defter.fragments
 
+import android.Manifest
+import android.app.Activity
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.graphics.Bitmap
+import android.graphics.ImageDecoder
+import android.graphics.Matrix
+import android.net.Uri
 import android.os.Bundle
-import android.os.Handler
-import android.os.Looper
+import android.provider.MediaStore
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.view.WindowManager
-import android.widget.Button
-import androidx.appcompat.app.AppCompatActivity
+import android.widget.Toast
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.ui.graphics.Color
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
+import androidx.navigation.findNavController
+import com.davemorrissey.labs.subscaleview.ImageSource
+import com.google.android.material.snackbar.Snackbar
+import com.saboon.defter.R
 import com.saboon.defter.databinding.FragmentImageViewerBinding
+import com.saboon.defter.utils.SelectedImageSingleton
 
-/**
- * An example full-screen fragment that shows and hides the system UI (i.e.
- * status bar and navigation/system bar) with user interaction.
- */
+
 class ImageViewerFragment : Fragment() {
-    private val hideHandler = Handler(Looper.myLooper()!!)
 
-    @Suppress("InlinedApi")
-    private val hidePart2Runnable = Runnable {
-        // Delayed removal of status and navigation bar
-
-        // Note that some of these constants are new as of API 16 (Jelly Bean)
-        // and API 19 (KitKat). It is safe to use them, as they are inlined
-        // at compile-time and do nothing on earlier devices.
-        val flags =
-            View.SYSTEM_UI_FLAG_LOW_PROFILE or
-                    View.SYSTEM_UI_FLAG_FULLSCREEN or
-                    View.SYSTEM_UI_FLAG_LAYOUT_STABLE or
-                    View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY or
-                    View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION or
-                    View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
-        activity?.window?.decorView?.systemUiVisibility = flags
-        (activity as? AppCompatActivity)?.supportActionBar?.hide()
-    }
-    private val showPart2Runnable = Runnable {
-        // Delayed display of UI elements
-        fullscreenContentControls?.visibility = View.VISIBLE
-    }
-    private var visible: Boolean = false
-    private val hideRunnable = Runnable { hide() }
-
-    /**
-     * Touch listener to use for in-layout UI controls to delay hiding the
-     * system UI. This is to prevent the jarring behavior of controls going away
-     * while interacting with activity UI.
-     */
-    private val delayHideTouchListener = View.OnTouchListener { _, _ ->
-        if (AUTO_HIDE) {
-            delayedHide(AUTO_HIDE_DELAY_MILLIS)
-        }
-        false
-    }
-
-    private var dummyButton: Button? = null
-    private var fullscreenContent: View? = null
-    private var fullscreenContentControls: View? = null
-
-    private var _binding: FragmentImageViewerBinding? = null
-
-    // This property is only valid between onCreateView and
-    // onDestroyView.
+    private var _binding : FragmentImageViewerBinding?=null
     private val binding get() = _binding!!
 
+    private lateinit var requestPermissionLauncher: ActivityResultLauncher<String>
+    private lateinit var activityResultLauncher: ActivityResultLauncher<Intent>
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+
+        registerLauncher()
+
+    }
+
     override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
+        inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
+        // Inflate the layout for this fragment
+        //return inflater.inflate(R.layout.fragment_image_viewer, container, false)
 
-        _binding = FragmentImageViewerBinding.inflate(inflater, container, false)
+        _binding = FragmentImageViewerBinding.inflate(inflater,container,false)
         return binding.root
-
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        visible = true
+        if (SelectedImageSingleton.selectedImageBitmap == null){
+            goToGallery(view)
+        }else{
+            binding.imageView.setImage(ImageSource.bitmap(SelectedImageSingleton.selectedImageBitmap!!))
+        }
 
-        dummyButton = binding.dummyButton
-        fullscreenContent = binding.fullscreenContent
-        fullscreenContentControls = binding.fullscreenContentControls
-        // Set up the user interaction to manually show or hide the system UI.
-        fullscreenContent?.setOnClickListener { toggle() }
+        binding.topAppBar.setOnMenuItemClickListener { menuItem ->
+            when (menuItem.itemId) {
+                R.id.cancel -> {
+                    SelectedImageSingleton.selectedImageBitmap = null
+                    val action = ImageViewerFragmentDirections.actionImageViewerFragmentToAddNewMomentFragment()
+                    view.findNavController().navigate(action)
+                    true
+                }
+                R.id.turnLeft -> {
+                    turnLeft()
+                    binding.imageView.setImage(ImageSource.bitmap(SelectedImageSingleton.selectedImageBitmap!!))
+                    true
+                }
+                R.id.turnRight -> {
+                    turnRight()
+                    binding.imageView.setImage(ImageSource.bitmap(SelectedImageSingleton.selectedImageBitmap!!))
+                    true
+                }
+                else -> false
+            }
+        }
 
-        // Upon interacting with UI controls, delay any scheduled hide()
-        // operations to prevent the jarring behavior of controls going away
-        // while interacting with the UI.
-        dummyButton?.setOnTouchListener(delayHideTouchListener)
+        binding.topAppBar.setNavigationOnClickListener {
+            goToGallery(it)
+        }
+
+        binding.imageView.setOnClickListener {
+
+            if (binding.appBarLayout.visibility == View.VISIBLE){
+                binding.appBarLayout.visibility = View.GONE
+                binding.UIComponent.visibility = View.GONE
+                binding.imageView.setBackgroundColor(Color.Black.hashCode())
+            }else{
+                binding.appBarLayout.visibility = View.VISIBLE
+                binding.UIComponent.visibility = View.VISIBLE
+                binding.imageView.setBackgroundColor(Color.White.hashCode())
+            }
+        }
+
+        binding.fab.setOnClickListener {
+            val action = ImageViewerFragmentDirections.actionImageViewerFragmentToAddNewMomentFragment()
+            it.findNavController().navigate(action)
+        }
+
     }
 
-    override fun onResume() {
-        super.onResume()
-        activity?.window?.addFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS)
+    private fun registerLauncher(){
+        activityResultLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()){ result ->
+            if(result.resultCode == Activity.RESULT_OK){
+                val intentFromResult = result.data
+                if (intentFromResult!=null){
 
-        // Trigger the initial hide() shortly after the activity has been
-        // created, to briefly hint to the user that UI controls
-        // are available.
-        delayedHide(100)
-    }
+                    intentFromResult.data.let {
+                        SelectedImageSingleton.selectedImageBitmap = uriToBitmap(intentFromResult.data!!)
+                        binding.imageView.setImage(ImageSource.bitmap(SelectedImageSingleton.selectedImageBitmap!!))
+                    }
+                }
+            }
+        }
 
-    override fun onPause() {
-        super.onPause()
-        activity?.window?.clearFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS)
-
-        // Clear the systemUiVisibility flag
-        activity?.window?.decorView?.systemUiVisibility = 0
-        show()
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-        dummyButton = null
-        fullscreenContent = null
-        fullscreenContentControls = null
-    }
-
-    private fun toggle() {
-        if (visible) {
-            hide()
-        } else {
-            show()
+        requestPermissionLauncher = registerForActivityResult(ActivityResultContracts.RequestPermission())
+        { isGranted: Boolean ->
+            if (isGranted) {
+                val intentToGallery = Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
+                activityResultLauncher.launch(intentToGallery)
+            } else {
+                Toast.makeText(requireContext(),resources.getString(R.string.permission), Toast.LENGTH_LONG).show()
+            }
         }
     }
 
-    private fun hide() {
-        // Hide UI first
-        fullscreenContentControls?.visibility = View.GONE
-        visible = false
-
-        // Schedule a runnable to remove the status and navigation bar after a delay
-        hideHandler.removeCallbacks(showPart2Runnable)
-        hideHandler.postDelayed(hidePart2Runnable, UI_ANIMATION_DELAY.toLong())
+    private fun goToGallery(view: View){
+        when {
+            ContextCompat.checkSelfPermission(
+                requireContext(),
+                Manifest.permission.READ_EXTERNAL_STORAGE
+            ) == PackageManager.PERMISSION_GRANTED -> {
+                val intentToGallery = Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
+                activityResultLauncher.launch(intentToGallery)
+            }
+            shouldShowRequestPermissionRationale(Manifest.permission.READ_EXTERNAL_STORAGE) -> {
+                Snackbar.make(view,resources.getString(R.string.permission),
+                    Snackbar.LENGTH_INDEFINITE).setAction(resources.getString(R.string.givePermission)){
+                    requestPermissionLauncher.launch(Manifest.permission.READ_EXTERNAL_STORAGE)
+                }.show()
+            }
+            else -> {
+                requestPermissionLauncher.launch(Manifest.permission.READ_EXTERNAL_STORAGE)
+            }
+        }
     }
 
-    @Suppress("InlinedApi")
-    private fun show() {
-        // Show the system bar
-        fullscreenContent?.systemUiVisibility =
-            View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN or
-                    View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-        visible = true
+    private fun uriToBitmap(uri: Uri): Bitmap? {
+        val result : Bitmap
+        try {
+            val source = ImageDecoder.createSource(requireActivity().contentResolver, uri)
+            result = ImageDecoder.decodeBitmap(source)
+            return result
+        }catch (e: Exception){
+            Toast.makeText(requireContext(),e.localizedMessage,Toast.LENGTH_LONG).show()
+        }
 
-        // Schedule a runnable to display UI elements after a delay
-        hideHandler.removeCallbacks(hidePart2Runnable)
-        hideHandler.postDelayed(showPart2Runnable, UI_ANIMATION_DELAY.toLong())
-        (activity as? AppCompatActivity)?.supportActionBar?.show()
+        return null
     }
 
-    /**
-     * Schedules a call to hide() in [delayMillis], canceling any
-     * previously scheduled calls.
-     */
-    private fun delayedHide(delayMillis: Int) {
-        hideHandler.removeCallbacks(hideRunnable)
-        hideHandler.postDelayed(hideRunnable, delayMillis.toLong())
+    private fun turnLeft(){
+        val matrix = Matrix()
+        matrix.postRotate(-90F)
+        SelectedImageSingleton.selectedImageBitmap = Bitmap.createBitmap(SelectedImageSingleton.selectedImageBitmap!!, 0, 0,
+            SelectedImageSingleton.selectedImageBitmap!!.width,
+            SelectedImageSingleton.selectedImageBitmap!!.height,
+            matrix, true)
     }
 
-    companion object {
-        /**
-         * Whether or not the system UI should be auto-hidden after
-         * [AUTO_HIDE_DELAY_MILLIS] milliseconds.
-         */
-        private const val AUTO_HIDE = true
-
-        /**
-         * If [AUTO_HIDE] is set, the number of milliseconds to wait after
-         * user interaction before hiding the system UI.
-         */
-        private const val AUTO_HIDE_DELAY_MILLIS = 3000
-
-        /**
-         * Some older devices needs a small delay between UI widget updates
-         * and a change of the status and navigation bar.
-         */
-        private const val UI_ANIMATION_DELAY = 300
+    private fun turnRight(){
+        val matrix = Matrix()
+        matrix.postRotate(90F)
+        SelectedImageSingleton.selectedImageBitmap = Bitmap.createBitmap(SelectedImageSingleton.selectedImageBitmap!!, 0, 0,
+            SelectedImageSingleton.selectedImageBitmap!!.width,
+            SelectedImageSingleton.selectedImageBitmap!!.height,
+            matrix, true)
     }
 
-    override fun onDestroyView() {
-        super.onDestroyView()
+
+    override fun onDestroy() {
+        super.onDestroy()
         _binding = null
     }
+
 }

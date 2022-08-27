@@ -30,4 +30,7 @@
     <string name="page_home">Home</string>
     <string name="account">Account</string>
     <string name="page_addNewMoment">Add New Moment</string>
+    <string name="page_selectPhoto">Select Photo</string>
+    <string name="turnLeft">Turn Left</string>
+    <string name="turnRight">Turn Right</string>
 </resources>

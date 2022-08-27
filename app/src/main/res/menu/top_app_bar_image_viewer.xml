@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <item
+        android:id="@+id/turnLeft"
+        android:title="@string/turnLeft"
+        android:icon="@drawable/ic_baseline_undo_24"
+        app:showAsAction="ifRoom"/>
+
+    <item
+        android:id="@+id/turnRight"
+        android:title="@string/turnRight"
+        android:icon="@drawable/ic_baseline_redo_24"
+        app:showAsAction="ifRoom"/>
+
+    <item
+        android:id="@+id/cancel"
+        android:title="@string/cancel"
+        android:icon="@drawable/ic_baseline_close_24"
+        app:showAsAction="ifRoom"/>
+
+</menu>

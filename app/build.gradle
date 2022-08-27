@@ -82,6 +82,8 @@ dependencies {
 
     //mike ortiz touch image view
     //implementation 'com.github.MikeOrtiz:TouchImageView:1.4.1'
+    //implementation 'com.github.chrisbanes:PhotoView:latest.release.here'
+    implementation 'com.davemorrissey.labs:subsampling-scale-image-view-androidx:3.10.0'
 
     //keyboard visibility
     implementation 'net.yslibrary.keyboardvisibilityevent:keyboardvisibilityevent:2.1.0'
